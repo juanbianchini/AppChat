@@ -56,7 +56,7 @@
             this.Controls.Add(this.mostrarTextBox);
             this.Controls.Add(this.entradaTextBox);
             this.Name = "ClienteChatForm";
-            this.Text = "ClienteChatForm";
+            this.Text = "Chat Cliente (TCP)";
             this.Load += new System.EventHandler(this.ClienteChatForm_Load);
             this.ResumeLayout(false);
             this.PerformLayout();

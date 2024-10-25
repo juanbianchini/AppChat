@@ -1,6 +1,6 @@
-﻿namespace ServidorChatTCP
+﻿namespace ServidorChatUDP
 {
-    partial class ServidorChatForm
+    partial class ServidorChatFormUDP
     {
         /// <summary>
         /// Required designer variable.
@@ -28,36 +28,26 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.entradaTextBox = new System.Windows.Forms.TextBox();
             this.mostrarTextBox = new System.Windows.Forms.TextBox();
             this.SuspendLayout();
             // 
-            // entradaTextBox
-            // 
-            this.entradaTextBox.Location = new System.Drawing.Point(31, 12);
-            this.entradaTextBox.Name = "entradaTextBox";
-            this.entradaTextBox.Size = new System.Drawing.Size(732, 22);
-            this.entradaTextBox.TabIndex = 0;
-            this.entradaTextBox.KeyDown += new System.Windows.Forms.KeyEventHandler(this.entradaTextBox_KeyDown);
-            // 
             // mostrarTextBox
             // 
-            this.mostrarTextBox.Location = new System.Drawing.Point(31, 59);
+            this.mostrarTextBox.Location = new System.Drawing.Point(32, 22);
             this.mostrarTextBox.Multiline = true;
             this.mostrarTextBox.Name = "mostrarTextBox";
-            this.mostrarTextBox.Size = new System.Drawing.Size(732, 364);
+            this.mostrarTextBox.Size = new System.Drawing.Size(731, 398);
             this.mostrarTextBox.TabIndex = 1;
             // 
-            // ServidorChatForm
+            // ServidorChatFormUDP
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
             this.Controls.Add(this.mostrarTextBox);
-            this.Controls.Add(this.entradaTextBox);
-            this.Name = "ServidorChatForm";
-            this.Text = "Chat Servidor (TCP)";
-            this.Load += new System.EventHandler(this.ServidorChatForm_Load);
+            this.Name = "ServidorChatFormUDP";
+            this.Text = "Chat Servidor (UDP)";
+            this.Load += new System.EventHandler(this.ServidorChatFormUDP_Load);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -65,7 +55,6 @@
 
         #endregion
 
-        private System.Windows.Forms.TextBox entradaTextBox;
         private System.Windows.Forms.TextBox mostrarTextBox;
     }
 }

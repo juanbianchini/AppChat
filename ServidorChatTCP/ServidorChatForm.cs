@@ -18,6 +18,7 @@ namespace ServidorChatTCP
 {
     public partial class ServidorChatForm : Form
     {
+        private ChatHistoryManager chatHistoryManager; // Declaración a nivel de clase
         public ServidorChatForm()
         {
             InitializeComponent();
@@ -32,8 +33,7 @@ namespace ServidorChatTCP
         //inicializa el subproceso para la lectura
         private void ServidorChatForm_Load(object sender, EventArgs e)
         {
-            lecturaThread = new Thread(new ThreadStart(EjecutarServidor));
-            lecturaThread.Start();
+            Task.Run(() => EjecutarServidor());
         }
         //fin del método ServidorChatForm
 
@@ -59,7 +59,10 @@ namespace ServidorChatTCP
             }
             //se puede modificar mostrarTextBox en el subproceso actual
             else
+            {
                 mostrarTextBox.Text += mensaje;
+            }
+                
         }
         //fin del método MostrarMensaje
 
@@ -83,7 +86,7 @@ namespace ServidorChatTCP
         //fin del método DeshabilitarEntrada
 
         //envía al cliente el texto escrito en el servidor
-        private void entradaTextBox_KeyDown(object sender, KeyEventArgs e)
+        private async void entradaTextBox_KeyDown(object sender, KeyEventArgs e)
         {
             //envía el texto al cliente
             try
@@ -92,6 +95,9 @@ namespace ServidorChatTCP
                 {
                     escritor.Write("SERVIDOR>>> " + entradaTextBox.Text);
                     mostrarTextBox.Text += "\r\nSERVIDOR>>> " + entradaTextBox.Text;
+
+                    // Guardar el mensaje en MongoDB
+                    await chatHistoryManager.SaveMessageAsync("SERVIDOR", entradaTextBox.Text, DateTime.Now);
 
                     //si el usuario en el servidor indico la terminación de la conexión con el cliente 
                     if (entradaTextBox.Text == "TERMINAR")
@@ -112,69 +118,83 @@ namespace ServidorChatTCP
         //fin del método entradaTextBox_KeyDown
 
         //permite que un cliente se conecte; muestra el texto que envía el cliente
-        public void EjecutarServidor()
+        public async void EjecutarServidor()
         {
             TcpListener oyente;
             int contador = 1;
 
+            // Configuración de MongoDB
+            var connectionString = "mongodb://localhost:27017"; // Ajusta según tu configuración
+            var databaseName = "ChatDatabase";
+            var collectionName = "ChatHistory";
+
+            // Inicializa chatHistoryManager a nivel de clase
+            chatHistoryManager = new ChatHistoryManager(connectionString, databaseName, collectionName);
+
+            // Recuperar historial de mensajes al iniciar el servidor
+            var chatMessages = await chatHistoryManager.GetChatHistoryAsync();
+            foreach (var message in chatMessages)
+            {
+                MostrarMensaje($"\r\n{message["user"]}: {message["message"]} [{message["timestamp"]}]\r\n");
+            }
+
             //espera la conexión con un cliente y muestra el texto que envía el cliente 
             try
             {
-                //Paso 1: crea TcpListener
-                IPAddress local = IPAddress.Parse("127.0.0.1");
+                // Paso 1: crea TcpListener
+                IPAddress local = IPAddress.Parse("192.168.0.14"); // Cambia esto a tu IP local
                 oyente = new TcpListener(local, 50000);
 
-                //Paso 2: TcpListener espera la solicitud de conexión
+                // Paso 2: TcpListener espera la solicitud de conexión
                 oyente.Start();
 
-                //Paso 3: establece la conexión con base en la solicitud del cliente 
+                // Paso 3: establece la conexión con base en la solicitud del cliente 
                 while (true)
                 {
-                    MostrarMensaje("Esperando una conexión\r\n");
+                    MostrarMensaje("\r\n\r\nEsperando una conexión\r\n");
 
-                    //acepta una conexión entrante 
+                    // acepta una conexión entrante 
                     conexion = oyente.AcceptSocket();
 
-                    //crea objeto NetworkStream asociado con el socket
+                    // crea objeto NetworkStream asociado con el socket
                     socketStream = new NetworkStream(conexion);
 
-                    //crea objetos para transferir datos a través de un flujo
+                    // crea objetos para transferir datos a través de un flujo
                     escritor = new BinaryWriter(socketStream);
                     lector = new BinaryReader(socketStream);
 
-                    MostrarMensaje("Conexión " + contador + " recibida.\r\n");
+                    MostrarMensaje("\r\nConexión " + contador + " recibida.\r\n");
 
-                    //informa que la conexión fue exitosa 
+                    // informa que la conexión fue exitosa 
                     escritor.Write("SERVIDOR>>> Conexión exitosa");
 
                     DeshabilitarEntrada(false);
-                    //habilita entradaTextBox
+                    // habilita entradaTextBox
 
                     string laRespuesta = "";
 
-                    //Paso 4: lee los datos de cadena que envía el cliente
+                    // Paso 4: lee los datos de cadena que envía el cliente
                     do
                     {
                         try
                         {
-                            //lee la cadena que se envía al cliente
+                            // lee la cadena que se envía al cliente
                             laRespuesta = lector.ReadString();
 
-                            //muestra el mensaje
+                            // muestra el mensaje
                             MostrarMensaje("\r\n" + laRespuesta);
+
                         }
-                        //fin del try
                         catch (Exception)
                         {
-                            //maneja la excepción si hay error al leer los datos
+                            // maneja la excepción si hay error al leer los datos
                             break;
                         }
-                        //fin del catch
                     } while (laRespuesta != "CLIENTE>>> TERMINAR" && conexion.Connected);
 
                     MostrarMensaje("\r\nEl usuario terminó la conexión\r\n");
 
-                    //Paso 5: cierra la conexión
+                    // Paso 5: cierra la conexión
                     escritor.Close();
                     lector.Close();
                     socketStream.Close();

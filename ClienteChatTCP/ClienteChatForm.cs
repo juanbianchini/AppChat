@@ -18,9 +18,17 @@ namespace ClienteChatTCP
 {
     public partial class ClienteChatForm : Form
     {
+        private ChatHistoryManager chatHistoryManager; // Definir la instancia aquí
         public ClienteChatForm()
         {
             InitializeComponent();
+
+            // Configuración de MongoDB en el constructor
+            var connectionString = "mongodb://localhost:27017"; // Ajusta según tu configuración
+            var databaseName = "ChatDatabase";
+            var collectionName = "ChatHistory";
+            chatHistoryManager = new ChatHistoryManager(connectionString, databaseName, collectionName);
+
         } //fin del constructor
 
         private Thread lecturaThread; //Thread para procesar los mensajes entrantes 
@@ -82,17 +90,41 @@ namespace ClienteChatTCP
         }
         //fin del método DeshabilitarEntrada
 
+        private void nombreTextBox_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+               
+                if (!string.IsNullOrWhiteSpace(nombreTextBox.Text))
+                {
+                    entradaTextBox.ReadOnly = false; // Habilita el cuadro de entrada de texto
+                    entradaTextBox.Focus(); // Enfoca el cuadro de entrada
+                }
+                else
+                {
+                    MessageBox.Show("Por favor, ingrese un nombre válido.");
+                }
+            }
+        }
+
+
         //envía al servidor el texto escrito en el cliente
-        private void entradaTextBox_KeyDown(object sender, KeyEventArgs e)
+        private async void entradaTextBox_KeyDown(object sender, KeyEventArgs e)
         {
             //envía el texto al servidor
             try
             {
                 if (e.KeyCode == Keys.Enter && entradaTextBox.ReadOnly == false)
                 {
-                    escritor.Write("CLIENTE>>> " + entradaTextBox.Text);
-                    mostrarTextBox.Text += "\r\nCLIENTE>>> " + entradaTextBox.Text;
+                    // Obtener el nombre del cliente
+                    string nombreCliente = nombreTextBox.Text;
+                    // Enviar el mensaje al servidor
+                    escritor.Write(nombreCliente + ">>> " + entradaTextBox.Text);
+                    mostrarTextBox.Text += $"\r\n{nombreCliente}>>> " + entradaTextBox.Text;
+                    // Guardar el mensaje en MongoDB
+                    await chatHistoryManager.SaveMessageAsync(nombreCliente, entradaTextBox.Text, DateTime.Now);
                     entradaTextBox.Clear();
+
                     //borra la entrada del usuario
                 }
                 //fin del if
@@ -118,7 +150,7 @@ namespace ClienteChatTCP
 
                 //Paso 1: crear TcpClient y conectar al servidor
                 cliente = new TcpClient();
-                cliente.Connect("127.0.0.1", 50000);
+                cliente.Connect("192.168.0.14", 50000);
 
                 //Paso 2: obtener NetWorkStream asociado con TcpClient
                 salida = cliente.GetStream();
@@ -167,6 +199,12 @@ namespace ClienteChatTCP
             }
             //fin del catch
         }
+
+        private void label2_Click(object sender, EventArgs e)
+        {
+
+        }
+
         //fin del método EjecutarCliente
     }
     //fin de la clase ClienteChatForm

@@ -1,5 +1,7 @@
 ## Proyecto de Aplicación de Chat
 
+Integrantes: Juan Bianchini - Franco Moreno
+
 ### 1. Introducción y Objetivos
 Este proyecto tiene como objetivo desarrollar una **aplicación de chat** en C# usando Visual Studio como parte de un proyecto universitario. La aplicación permite la comunicación entre usuarios a través de protocolos TCP y UDP.Para mejorar la funcionalidad y la experiencia del usuario, se ha desarrollado una interfaz gráfica atractiva y un sistema de historial de chats que se almacena en una base de datos MongoDB.
 
